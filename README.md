@@ -18,7 +18,7 @@ Nel caso di fossero degli errori durante l'ingestione è possibile raccogliere i
 Per facilitare l'operazione, sono stati creati due step di script.
 Il primo script scaricherà i files da s3, mettendoli nella cartella **files**:
 
-`bash get-telemetries.step1.sh format-conversion-failed`
+`bash get-telemetries_step1.sh format-conversion-failed`
 
 scaricherà i files della cartella *format-conversion-failed* dal percorso `s3://rurall-sdf-ingestion/errors/` e li metterà in un'unica cartella **files/**. Questi file conterranno, uno per riga, dei dati JSON.
 
