@@ -15,7 +15,7 @@ Dopo aver copiato i file .csv delle telemetrie nella rispettiva cartella **csv**
 
 0. `pip install -r requirements.txt`
 1. `bash reset-folders.sh` (**opzionale**)
-2. `python3 convert-csv.py`
+2. `python3 convert_csv.py`
 3. `bash put-records-batch.sh` **oppure** `bash put-records.sh`
 
 Il comando `bash reset-folders.sh`, eseguito opzionalmente all'inizio della pipeline, permette di svuotare rapidamente le cartelle **json**, **base64** e **base64-batch**, popolate dallo script `convert-csv.py` ed utilizzate in seguito come base per l'ingestione.  

@@ -4,7 +4,17 @@ import json
 import base64
 import os
 import uuid
+import sys
 
+try:
+    sep, decimal, thousands = sys.argv[1], sys.argv[2], sys.argv[3]
+except IndexError:
+    sep, decimal, thousands = ';', ',', '.'
+
+if thousands == 'None':
+    thousands = None
+
+print(f'Using sep={sep} decimal={decimal} thousands={thousands}')
 
 def convert_csv():
     record_batch = []
@@ -13,7 +23,7 @@ def convert_csv():
 
     for file in os.listdir('csv'):
         if file.endswith('.csv'):
-            df = pd.read_csv(f'./csv/{file}', sep=';', decimal=',', thousands='.').replace(np.nan, None)
+            df = pd.read_csv(f'./csv/{file}', sep=sep, decimal=decimal, thousands=thousands).replace(np.nan, None)
             df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M:%S.%f %z', utc=True).apply(lambda x: x.isoformat().replace('+00:00', 'Z'))
             df['row_create_dt'] = pd.to_datetime(df['row_create_dt'], format='%Y-%m-%d %H:%M:%S.%f %z', utc=True).apply(lambda x: x.isoformat().replace('+00:00', 'Z'))
             data = df.to_dict(orient='records')
