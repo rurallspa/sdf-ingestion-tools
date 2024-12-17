@@ -7,7 +7,7 @@ Per utilizzare gli script contenuti in questa repository, è necessario eseguire
 ```sh
 git clone https://github.com/rurallspa/sdf-ingestion-tools.git
 cd sdf-ingestion-tools
-pipenv install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Conversione telemetrie da CSV a JSON
