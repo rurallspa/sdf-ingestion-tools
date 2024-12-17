@@ -1,0 +1,655 @@
+openapi: "3.0.1"
+info:
+  title: "telemetry"
+  description: "this REST API gives access to the telemetries gathered by the SDF\
+    \ data platform"
+  version: "2023-11-30T22:18:30Z"
+servers:
+- url: "https://o1lz4u2lh2.execute-api.eu-west-1.amazonaws.com/{basePath}"
+  variables:
+    basePath:
+      default: "v1"
+paths:
+  /fields/from_fields:
+    get:
+      description: "Returns a GeoJSON containing the field geometry, id_geom and id_appez, the\
+        \ day of visit by the specified vehicle, the probability that the performed\
+        \ treatment belongs to each of the 5 macro-classes (0-4), and the performed\
+        \ treatment start and end time. If a field was visited more than once by the\
+        \ same vehicle, then it returns a collection of such objects."
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "WSXFN40200LD10110"
+      - name: "field_id"
+        in: "query"
+        description: "MGRS grid coordinate of the field centroid, with a precision\
+          \ level of 100 meters"
+        required: true
+        schema:
+          type: "string"
+          example: "32TQQ300738"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          headers:
+            Content-Length:
+              schema:
+                type: "string"
+                example: "1814"
+            Timestamp:
+              schema:
+                type: "string"
+                example: "Wed, 06 Mar 2024 16:45:16 GMT"
+            Content-Type:
+              schema:
+                type: "string"
+                example: "application/json"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: 
+                    type: string
+                    example: "FeatureCollection"
+                  crs:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: name
+                      properties:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "urn:ogc:def:crs:OGC:1.3:CRS84"
+                  features:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: "Feature"
+                        properties:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                              example: "2023-11-17"
+                            id_geom:
+                              type: string
+                              example: "0020"
+                            id_appez:
+                              type: string
+                              example: "0020"
+                            treatment_probs:
+                              type: object
+                              properties:
+                                c0:
+                                  type: number
+                                  example: 0
+                                c1:
+                                  type: number
+                                  example: 0
+                                c2:
+                                  type: number
+                                  example: 0
+                                c3:
+                                  type: number
+                                  example: 0
+                                c4:
+                                  type: number
+                                  example: 1
+                            treatment_class_pred:
+                              type: string
+                              example: "c4"
+                            start_time:
+                              type: string
+                              example: "2023-11-17T14:50:31Z"
+                            end_time:
+                              type: string
+                              example: "2023-11-17T15:37:21Z"
+                        geometry:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              example: "Polygon"
+                            coordinates:
+                              type: array
+                              items:
+                                type: array
+                                items:
+                                  type: number
+      security:
+      - api_key: []
+      
+  /fields/from_tractors:
+    get:
+      description: "Returns the list of fields visited by the specified\
+        \ vehicle within the given date interval. For each field, the information includes\
+        \ the respective geometry and id (i.e. MGRS grid coordinate of the field centroid,\
+        \ with a precision level of 100 meters). The specified date limits are included."
+      operationId: "getFieldsByTractorAndTime"
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50046"
+      - name: "date_from"
+        in: "query"
+        description: "Initial date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-01"
+      - name: "date_to"
+        in: "query"
+        description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-05"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: "MGRS grid coordinate of the field centroid, with a precision level of 100 meters"
+                      example: 32TQQ344726
+                    date:
+                      type: string
+                      description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+                      example: '2024-03-05'
+                    geometry:
+                      type: string
+                      description: "Geometry of the field in WKT format"
+                      example: "POLYGON ((11.964441027997562 44.86701352760381, 11.968334657202039 44.86704336227265, 11.972775494960393 44.86971338985662, 11.96429369854358 44.86966864227638, 11.964441027997562 44.86701352760381))"
+      security:
+      - api_key: []
+
+  /inference:
+    get:
+      description: "Returns the number\
+        \ of points recorded by the vehicle on the specified field and the estimated\
+        \ probabilities of the performed treatment belonging to each of the 4 macroclasses.\
+        \ In particular, the treatment classes are defined as: 1 (Lavorazione Primaria),\
+        \ 2 (Lavorazione Secondaria), 3 (Semina / Concimazione / Trattamento Fitosanitario),\
+        \ 4 (Lavorazione Ausiliaria) and 0 (None of the above)"
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50046"
+      - name: "field_id"
+        in: "query"
+        description: "MGRS grid coordinate of the field centroid, with a precision\
+          \ level of 100 meters"
+        required: true
+        schema:
+          type: "string"
+          example: "32TQQ344726"
+      - name: "date"
+        in: "query"
+        description: "Date of visit in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-05"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vin:
+                    type: string
+                    description: "Vehicle Identification Number"
+                    example: "ZKDLW702W0TD50046"
+                  date:
+                    type: string
+                    description: "Date of visit in ISO format (YYYY-MM-DD)"
+                    example: "2024-03-05"
+                  field_id:
+                    type: string
+                    description: "MGRS grid coordinate of the field centroid, with a precision level of 100 meters"
+                    example: 32TQQ344726
+                  n_points:
+                    type: integer
+                    description: "Number of telemetries recorded on the field (with speed > 0) on which the inference is based"
+                    example: 21
+                  probabilities:
+                    type: object
+                    properties:
+                      "c0":
+                        type: number
+                        description: Probability [0-1] that the performed treatment belongs to class 0
+                        example: 0.00
+                      "c1":
+                        type: number
+                        description: Probability [0-1] that the performed treatment belongs to class 1
+                        example: 0.00
+                      "c2":
+                        type: number
+                        description: Probability [0-1] that the performed treatment belongs to class 2
+                        example: 0.00
+                      "c3":
+                        type: number
+                        description: Probability [0-1] that the performed treatment belongs to class 3
+                        example: 0.00
+                      "c4":
+                        type: number
+                        description: Probability [0-1] that the performed treatment belongs to class 4
+                        example: 1.00
+      security:
+      - api_key: []
+
+  /telemetries:
+    get:
+      description: Returns a list containing all telemetries recorded by the specified vehicle within the given timeframe. The specified date limits are included.
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLB302W0TS50075"
+      - name: "date_from"
+        in: "query"
+        description: "Initial date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-05"
+      - name: "date_to"
+        in: "query"
+        description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-05"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    altitude:
+                      type: number
+                      example: 188.2
+                    latitude:
+                      type: number
+                      example: 43.05967
+                    longitude: 
+                      type: number
+                      example: 10.8653555
+                    messagecounter: 
+                      type: integer
+                      example: 1
+                    serialnumberctm: 
+                      type: string
+                      example: 002-2238-0073-AA
+                    relative_engine_torque_sdf: 
+                      type: integer
+                      example: 61
+                    tank_level_sdf: 
+                      type: integer
+                      example: 99
+                    c_epb_state:
+                      type: string
+                    vehicle_speed_sdf:
+                      type: number
+                      example: 11.2
+                    c_epb_xactuator:
+                      type: number
+                    c_epb_backup_batt_volt:
+                      type: number
+                    engine_speed_sdf: 
+                      type: number
+                      example: 971.5
+                    actual_engine_torque_sdf: 
+                      type: integer
+                      example: 46
+                    front_pto_speed_sdf: 
+                      type: integer
+                      example: 0
+                    rear_pto_speed_sdf: 
+                      type: integer
+                      example: 0
+                    4wd_status_sdf: 
+                      type: string
+                      example: 'OFF'
+                    difflock_state_sdf:
+                      type: string
+                      example: 'OFF'
+                    fuel_consumption_sdf: 
+                      type: number
+                      example: 5.05
+                    intake_manifold_temperature: 
+                      type: integer
+                      example: 13
+                    exhaust_gas_temperature: 
+                      type: number
+                      example: 21.25
+                    engine_oil_pressure_sdf: 
+                      type: number
+                      example: 10.12
+                    power_reduction: 
+                      type: integer
+                      example: 100
+                    power_reduction_md3: 
+                      type: integer
+                      example: 100
+                    rear_lift_position_sdf: 
+                      type: integer
+                      example: 98
+                    dpf_sootloadpercent: 
+                      type: integer
+                      example: 47
+                    battery_voltage_sdf: 
+                      type: number
+                      example: 13.8
+                    cabin_temperature_sdf: 
+                      type: number
+                      example: 22.2
+                    ac_status_sdf: 
+                      type: integer
+                      example: 0
+                    urea_level_sdf: 
+                      type: number
+                      example: 74.8
+                    ambient_temperature_sdf: 
+                      type: number
+                      example: 12.5625
+                    oil_temperature_sdf_-_frutteto:
+                      type: integer
+                      example: 10
+                    engine_coolant_temperature_sdf:
+                      type: integer
+                      example: 12
+                    engine_oil_temperature_sdf: 
+                      type: integer
+                      example: 10
+                    engine_hours_sdf:
+                      type: number
+                      example: 128.5
+                    timestamp: 
+                      type: string
+                      example: '2024-03-05T10:15:49Z'
+                    vin: 
+                      type: string
+                      example: "ZKDLB302W0TS50075"
+                    date: 
+                      type: string
+                      example: '2024-03-05'
+      security:
+      - api_key: []
+
+  /analytics/fuel_consumption:
+    get:
+      description: Calculates total fuel consumption in liters for the given vehicle within the specified date interval. Fuel consumption is derived as the sum of the product between fuel rate (L/h) and duration in-between consecutive telemetries (h). The specified date limits are included in the calculation.
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50046"
+      - name: "date_from"
+        in: "query"
+        description: "Initial date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-01"
+      - name: "date_to"
+        in: "query"
+        description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-05"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fuel_consumption:
+                    type: number
+                    example: 23.735
+      security:
+      - api_key: []
+      
+  /analytics/rent_affinity:
+    get:
+      description: Returns a boolean value (True/False) representing whether the tractor was rented out to third parties within the last year. The estimation is based on the amount of activity recorded and treatments performed.
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50044"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rent_affinity:
+                    type: boolean
+                    example: False
+      security:
+      - api_key: []
+
+  /analytics/km:
+    get:
+      description: Calculates total distance traveled in kilometers (km) for the given vehicle within the specified date interval. Distance traveled is estimated as the sum of the straight-line distance in-between consecutive telemetries recorded. The specified date limits are included in the calculation.
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50044"
+      - name: "date_from"
+        in: "query"
+        description: "Initial date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-01"
+      - name: "date_to"
+        in: "query"
+        description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-11"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  distance_km:
+                    type: number
+                    example: 44.62
+      security:
+      - api_key: []
+
+  /analytics/hours:
+    get:
+      description: Calculates total amount of engine activity hours (h) for the given vehicle within the specified date interval. The specified date limits are included in the calculation.
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50044"
+      - name: "date_from"
+        in: "query"
+        description: "Initial date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-01"
+      - name: "date_to"
+        in: "query"
+        description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-11"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hours:
+                    type: integer
+                    example: 6
+      security:
+      - api_key: []
+
+  /analytics/treatments:
+    get:
+      description: Calculates total number of treatments performed by the specified vehicle within the given date interval. The date limits are included in the calculation.
+      parameters:
+      - name: "vin"
+        in: "query"
+        description: "Vehicle Identification Number"
+        required: true
+        schema:
+          type: "string"
+          example: "ZKDLW702W0TD50046"
+      - name: "date_from"
+        in: "query"
+        description: "Initial date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-01"
+      - name: "date_to"
+        in: "query"
+        description: "Final date to consider, in ISO format (YYYY-MM-DD)"
+        required: true
+        schema:
+          type: "string"
+          example: "2024-03-11"
+      responses:
+        "400":
+          description: "400 response"
+          content: {}
+        "500":
+          description: "500 response"
+          content: {}
+        "200":
+          description: "200 response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  n_treatments:
+                    type: integer
+                    example: 16
+      security:
+      - api_key: []
+
+components:
+  securitySchemes:
+    api_key:
+      type: "apiKey"
+      name: "x-api-key"
+      in: "header"
